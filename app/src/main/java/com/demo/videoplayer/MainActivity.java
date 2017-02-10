@@ -94,7 +94,7 @@ public class MainActivity extends Activity {
         @Override
         public boolean onDown(MotionEvent e) {//用户按下屏幕就会触发
             if (controllerbar_layout.getVisibility() == View.VISIBLE) {
-                controllerbar_layout.setVisibility(View.GONE);
+//                controllerbar_layout.setVisibility(View.GONE);
             } else {
                 controllerbar_layout.setVisibility(View.VISIBLE);
             }
@@ -131,7 +131,7 @@ public class MainActivity extends Activity {
 //            float offsetY = e1.getY() - e2.getY();
 //            float absOffsetX = Math.abs(offsetX);
 //            float absOffsetY = Math.abs(offsetY);
-            if (distanceX < distanceY) {
+            if (Math.abs(distanceX) < Math.abs(distanceY)) {
                 Log.e("Main", "distanceX=" + distanceX + ",distanceY=" + distanceY);
                 if ((e1.getX() < screenWidth / 2) && (e2.getX() < screenWidth / 2)) {
                     changeBrightness(distanceY);
@@ -176,7 +176,7 @@ public class MainActivity extends Activity {
     private void changeBrightness(float offset) {
         WindowManager.LayoutParams attributes = getWindow().getAttributes();
         float brightness = attributes.screenBrightness;
-        float index = offset / screenHeight / 3;// 除3是为了弱化效果
+        float index = offset / screenHeight;// 除3是为了弱化效果
         float newBrightness = Math.max(brightness + index, WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_OFF);
         newBrightness = Math.min(WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL, newBrightness);
         attributes.screenBrightness = newBrightness;
