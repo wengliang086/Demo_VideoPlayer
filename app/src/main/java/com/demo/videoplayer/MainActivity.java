@@ -18,6 +18,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -36,8 +37,9 @@ public class MainActivity extends Activity {
     private RelativeLayout videoViewLayout;
     private LinearLayout controllerbar_layout;
     private SeekBar play_progress, volum_progress;
-    private ImageView btn_play, full_screen, iv_volume;
+    private ImageView btn_play, full_screen, iv_volume, center_process;
     private TextView time_current_tv, time_total_tv;
+    private FrameLayout frameLayout;
 
     /**
      * 屏幕屏幕宽、高
@@ -83,6 +85,10 @@ public class MainActivity extends Activity {
         time_current_tv = (TextView) findViewById(R.id.time_current_tv);
         time_total_tv = (TextView) findViewById(R.id.time_total_tv);
 
+        frameLayout = (FrameLayout) findViewById(R.id.id_aaa);
+        frameLayout.setVisibility(View.GONE);
+        center_process = (ImageView) findViewById(R.id.id_percent_progress);
+
         //横竖屏处理
         onConfigurationChanged(getResources().getConfiguration());
 
@@ -98,6 +104,7 @@ public class MainActivity extends Activity {
             } else {
                 controllerbar_layout.setVisibility(View.VISIBLE);
             }
+            frameLayout.setVisibility(View.VISIBLE);
             return true;
         }
 
@@ -107,6 +114,7 @@ public class MainActivity extends Activity {
 
         @Override
         public boolean onSingleTapUp(MotionEvent e) {
+            frameLayout.setVisibility(View.GONE);
             /**
              * 从名子也可以看出,一次单独的轻击抬起操作,也就是轻击一下屏幕，立刻抬起来，才会有这个触发，
              * 当然,如果除了Down以外还有其它操作,那就不再算是Single操作了,所以也就不会触发这个事件
@@ -170,6 +178,10 @@ public class MainActivity extends Activity {
         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, 0);
         volum_progress.setProgress(volume);
         Log.e("Main", "声音从" + currentVolume + "到" + volume);
+
+        ViewGroup.LayoutParams p = center_process.getLayoutParams();
+        p.width = (int) (Utils.dp2px(this, 94) * volume / maxVolume);
+        center_process.setLayoutParams(p);
     }
 
     //调整亮度
@@ -182,6 +194,10 @@ public class MainActivity extends Activity {
         attributes.screenBrightness = newBrightness;
         getWindow().setAttributes(attributes);
         Log.e("Main", "亮度从" + brightness + "到" + newBrightness);
+
+        ViewGroup.LayoutParams p = center_process.getLayoutParams();
+        p.width = (int) (Utils.dp2px(this, 94) * newBrightness);
+        center_process.setLayoutParams(p);
     }
 
     @Override

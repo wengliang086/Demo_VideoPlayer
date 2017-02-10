@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/id_aaa"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_centerInParent="true"
+    android:layout_marginTop="-50dp"
+    android:background="#00000000"
+    android:visibility="gone">
+
+    <ImageView
+        android:id="@+id/id_operation_bg"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_gravity="center"
+        android:src="@drawable/wechat" />
+
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:paddingBottom="25dp">
+
+        <ImageView
+            android:layout_width="94dp"
+            android:layout_height="5dp"
+            android:layout_gravity="left"
+            android:src="@android:color/holo_orange_light" />
+
+        <ImageView
+            android:id="@+id/id_percent_progress"
+            android:layout_width="94dp"
+            android:layout_height="5dp"
+            android:layout_gravity="left"
+            android:src="@android:color/holo_red_dark" />
+    </FrameLayout>
+</FrameLayout>
