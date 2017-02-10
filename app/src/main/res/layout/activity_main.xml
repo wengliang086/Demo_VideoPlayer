@@ -8,7 +8,7 @@
         android:layout_width="match_parent"
         android:layout_height="240dp">
 
-        <VideoView
+        <com.demo.videoplayer.CustomVideoView
             android:id="@+id/id_video_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />

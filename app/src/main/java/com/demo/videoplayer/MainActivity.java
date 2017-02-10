@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -91,7 +92,7 @@ public class MainActivity extends Activity {
 
     GestureDetector.OnGestureListener gestureListener = new GestureDetector.OnGestureListener() {
         @Override
-        public boolean onDown(MotionEvent e) {
+        public boolean onDown(MotionEvent e) {//用户按下屏幕就会触发
             if (controllerbar_layout.getVisibility() == View.VISIBLE) {
                 controllerbar_layout.setVisibility(View.GONE);
             } else {
@@ -106,12 +107,39 @@ public class MainActivity extends Activity {
 
         @Override
         public boolean onSingleTapUp(MotionEvent e) {
+            /**
+             * 从名子也可以看出,一次单独的轻击抬起操作,也就是轻击一下屏幕，立刻抬起来，才会有这个触发，
+             * 当然,如果除了Down以外还有其它操作,那就不再算是Single操作了,所以也就不会触发这个事件
+             * 触发顺序：
+             * 点击一下非常快的（不滑动）Touchup：onDown->onSingleTapUp->onSingleTapConfirmed
+             * 点击一下稍微慢点的（不滑动）Touchup：onDown->onShowPress->onSingleTapUp->onSingleTapConfirmed
+             */
             return false;
         }
 
         @Override
         public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-            return false;
+            /**
+             * 在屏幕上拖动事件。无论是用手拖动view，或者是以抛的动作滚动，都会多次触发,这个方法
+             * 在ACTION_MOVE动作发生时就会触发滑屏：手指触动屏幕后，稍微滑动后立即松开
+             onDown-----》onScroll----》onScroll----》onScroll----》………----->onFling
+             拖动
+             onDown------》onScroll----》onScroll------》onFiling
+             可见，无论是滑屏，还是拖动，影响的只是中间OnScroll触发的数量多少而已，最终都会触发onFling事件！
+             */
+//            float offsetX = e1.getX() - e2.getX();
+//            float offsetY = e1.getY() - e2.getY();
+//            float absOffsetX = Math.abs(offsetX);
+//            float absOffsetY = Math.abs(offsetY);
+            if (distanceX < distanceY) {
+                Log.e("Main", "distanceX=" + distanceX + ",distanceY=" + distanceY);
+                if ((e1.getX() < screenWidth / 2) && (e2.getX() < screenWidth / 2)) {
+                    changeBrightness(distanceY);
+                } else if ((e1.getX() > screenWidth / 2) && (e2.getX() > screenWidth / 2)) {
+                    changeVolume(distanceY);
+                }
+            }
+            return true;
         }
 
         @Override
@@ -120,16 +148,15 @@ public class MainActivity extends Activity {
 
         @Override
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-            float offsetX = e1.getX() - e2.getX();
-            float offsetY = e1.getY() - e2.getY();
-            float absOffsetX = Math.abs(offsetX);
-            float absOffsetY = Math.abs(offsetY);
-            if ((e1.getX() < screenWidth / 2) && (e2.getX() < screenWidth / 2) && (absOffsetX < absOffsetY)) {
-                changeBrightness(offsetY);
-            } else if ((e1.getX() > screenWidth / 2) && (e2.getX() > screenWidth / 2) && (absOffsetX < absOffsetY)) {
-                changeVolume(offsetY);
-            }
-            return true;
+            /**
+             * 滑屏，用户按下触摸屏、快速移动后松开，由1个MotionEvent ACTION_DOWN, 多个ACTION_MOVE, 1个ACTION_UP触发
+             * 参数解释：
+             e1：第1个ACTION_DOWN MotionEvent
+             e2：最后一个ACTION_MOVE MotionEvent
+             velocityX：X轴上的移动速度，像素/秒
+             velocityY：Y轴上的移动速度，像素/秒
+             */
+            return false;
         }
     };
 
@@ -137,22 +164,24 @@ public class MainActivity extends Activity {
     private void changeVolume(float offset) {
         int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
         int currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-        int index = (int) (offset / screenHeight * maxVolume);
+        int index = (int) (offset / screenHeight * maxVolume * 3);// 为了变化更加明显，所以*3
         int volume = Math.max(currentVolume + index, 0);
         volume = Math.min(volume, maxVolume);
         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, 0);
         volum_progress.setProgress(volume);
+        Log.e("Main", "声音从" + currentVolume + "到" + volume);
     }
 
     //调整亮度
     private void changeBrightness(float offset) {
         WindowManager.LayoutParams attributes = getWindow().getAttributes();
         float brightness = attributes.screenBrightness;
-        float index = offset / screenHeight / 2;
-        brightness = Math.max(brightness + index, WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_OFF);
-        brightness = Math.min(WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL, brightness);
-        attributes.screenBrightness = brightness;
+        float index = offset / screenHeight / 3;// 除3是为了弱化效果
+        float newBrightness = Math.max(brightness + index, WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_OFF);
+        newBrightness = Math.min(WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL, newBrightness);
+        attributes.screenBrightness = newBrightness;
         getWindow().setAttributes(attributes);
+        Log.e("Main", "亮度从" + brightness + "到" + newBrightness);
     }
 
     @Override
@@ -296,6 +325,8 @@ public class MainActivity extends Activity {
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
+        screenWidth = getResources().getDisplayMetrics().widthPixels;
+        screenHeight = getResources().getDisplayMetrics().heightPixels;
         if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
             setSystemUiVisible();
             setVideoViewScale(ViewGroup.LayoutParams.MATCH_PARENT, Utils.dp2px(this, 240));
@@ -303,6 +334,9 @@ public class MainActivity extends Activity {
             iv_volume.setVisibility(View.GONE);
             volum_progress.setVisibility(View.GONE);
             full_screen.setImageResource(R.drawable.full_screen);
+
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
         } else if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             setSystemUiHide();
             setVideoViewScale(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
@@ -310,6 +344,9 @@ public class MainActivity extends Activity {
             iv_volume.setVisibility(View.VISIBLE);
             volum_progress.setVisibility(View.VISIBLE);
             full_screen.setImageResource(R.drawable.exit_full_screen);
+
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         }
     }
 
